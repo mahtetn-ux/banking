@@ -2,6 +2,7 @@
 import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
 import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,22 +40,22 @@ export const formatDateTime = (dateString: Date) => {
 
   const formattedDateTime: string = new Date(dateString).toLocaleString(
     "en-US",
-    dateTimeOptions
+    dateTimeOptions,
   );
 
   const formattedDateDay: string = new Date(dateString).toLocaleString(
     "en-US",
-    dateDayOptions
+    dateDayOptions,
   );
 
   const formattedDate: string = new Date(dateString).toLocaleString(
     "en-US",
-    dateOptions
+    dateOptions,
   );
 
   const formattedTime: string = new Date(dateString).toLocaleString(
     "en-US",
-    timeOptions
+    timeOptions,
   );
 
   return {
@@ -97,7 +98,7 @@ export function formUrlQuery({ params, key, value }: UrlQueryParams) {
       url: window.location.pathname,
       query: currentUrl,
     },
-    { skipNull: true }
+    { skipNull: true },
   );
 }
 
@@ -130,7 +131,7 @@ export function getAccountTypeColors(type: AccountTypes) {
 }
 
 export function countTransactionCategories(
-  transactions: Transaction[]
+  transactions: Transaction[],
 ): CategoryCount[] {
   const categoryCounts: { [category: string]: number } = {};
   let totalCount = 0;
@@ -159,7 +160,7 @@ export function countTransactionCategories(
       name: category,
       count: categoryCounts[category],
       totalCount,
-    })
+    }),
   );
 
   // Sort the aggregatedCategories array by count in descending order
@@ -193,3 +194,21 @@ export const getTransactionStatus = (date: Date) => {
 
   return date > twoDaysAgo ? "Processing" : "Success";
 };
+
+export const authFormSchema = (type: string) =>
+  z.object({
+    // sign up
+    firstName: type === "sign-in" ? z.string().optional() : z.string().min(3),
+    lastName: type === "sign-in" ? z.string().optional() : z.string().min(3),
+    address1: type === "sign-in" ? z.string().optional() : z.string().max(50),
+    city: type === "sign-in" ? z.string().optional() : z.string().max(50),
+    state:
+      type === "sign-in" ? z.string().optional() : z.string().min(2).max(2),
+    postalCode:
+      type === "sign-in" ? z.string().optional() : z.string().min(3).max(6),
+    dateOfBirth: type === "sign-in" ? z.string().optional() : z.string().min(3),
+    ssn: type === "sign-in" ? z.string().optional() : z.string().min(3),
+    // both
+    email: z.string().email(),
+    password: z.string().min(8),
+  });

@@ -10,15 +10,15 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ['400', '700']
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Horizon",
   description: "Horizon is a modern banking platform for everyone.",
   icons: {
-    icon: '/icons/logo.svg'
-  }
+    icon: "/icons/logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
