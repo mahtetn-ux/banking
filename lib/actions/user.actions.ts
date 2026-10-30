@@ -13,28 +13,45 @@ import {
 
 import { plaidClient } from "@/lib/plaid";
 import { revalidatePath } from "next/cache";
-import { createDwollaCustomer } from "./dwolla.actions";
-// import { addFundingSource, createDwollaCustomer } from "./dwolla.actions";
+import { addFundingSource, createDwollaCustomer } from "./dwolla.actions";
 
-const {
-  APPWRITE_DATABASE_ID: DATABASE_ID,
-  APPWRITE_USER_COLLECTION_ID: USER_COLLECTION_ID,
-  APPWRITE_BANK_COLLECTION_ID: BANK_COLLECTION_ID,
-} = process.env;
+const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
+const USER_TABLE_ID =
+  process.env.APPWRITE_USER_TABLE_ID ??
+  process.env.APPWRITE_USER_COLLECTION_ID;
+const BANK_TABLE_ID =
+  process.env.APPWRITE_BANK_TABLE_ID ??
+  process.env.APPWRITE_BANK_COLLECTION_ID;
+
+const getTableConfig = (tableId: string | undefined, tableName: string) => {
+  if (!DATABASE_ID) {
+    throw new Error("APPWRITE_DATABASE_ID is not configured");
+  }
+  if (!tableId) {
+    throw new Error(`${tableName} is not configured`);
+  }
+
+  return { databaseId: DATABASE_ID, tableId };
+};
 
 export const getUserInfo = async ({ userId }: getUserInfoProps) => {
   try {
-    const { database } = await createAdminClient();
+    const { tables } = await createAdminClient();
 
-    const user = await database.listDocuments(
-      DATABASE_ID!,
-      USER_COLLECTION_ID!,
-      [Query.equal("userId", [userId])],
-    );
+    const user = await tables.listRows({
+      ...getTableConfig(USER_TABLE_ID, "APPWRITE_USER_TABLE_ID"),
+      queries: [Query.equal("userId", [userId])],
+    });
 
-    return parseStringify(user.documents[0]);
+    const userRow = user.rows[0];
+
+    return parseStringify({
+      ...userRow,
+      name: `${userRow.firstName} ${userRow.lastName}`.trim(),
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch user row from Appwrite:", error);
+    throw error;
   }
 };
 
@@ -64,7 +81,7 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
   let newUserAccount;
 
   try {
-    const { account, database } = await createAdminClient();
+    const { account, tables } = await createAdminClient();
 
     newUserAccount = await account.create(
       ID.unique(),
@@ -84,17 +101,16 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
 
     const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
 
-    const newUser = await database.createDocument(
-      DATABASE_ID!,
-      USER_COLLECTION_ID!,
-      ID.unique(),
-      {
+    const newUser = await tables.createRow({
+      ...getTableConfig(USER_TABLE_ID, "APPWRITE_USER_TABLE_ID"),
+      rowId: ID.unique(),
+      data: {
         ...userData,
         userId: newUserAccount.$id,
         dwollaCustomerId,
         dwollaCustomerUrl,
       },
-    );
+    });
 
     const session = await account.createEmailPasswordSession(email, password);
 
@@ -105,7 +121,10 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       secure: true,
     });
 
-    return parseStringify(newUser);
+    return parseStringify({
+      ...newUser,
+      name: `${firstName} ${lastName}`.trim(),
+    });
   } catch (error) {
     console.error("Error", error);
   }
@@ -129,7 +148,7 @@ export const logoutAccount = async () => {
   try {
     const { account } = await createSessionClient();
 
-    cookies().delete("appwrite-session");
+    (await cookies()).delete("appwrite-session");
 
     await account.deleteSession("current");
   } catch (error) {
@@ -153,7 +172,8 @@ export const createLinkToken = async (user: User) => {
 
     return parseStringify({ linkToken: response.data.link_token });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch user row from Appwrite:", error);
+    throw error;
   }
 };
 
@@ -166,13 +186,12 @@ export const createBankAccount = async ({
   shareableId,
 }: createBankAccountProps) => {
   try {
-    const { database } = await createAdminClient();
+    const { tables } = await createAdminClient();
 
-    const bankAccount = await database.createDocument(
-      DATABASE_ID!,
-      BANK_COLLECTION_ID!,
-      ID.unique(),
-      {
+    const bankAccount = await tables.createRow({
+      ...getTableConfig(BANK_TABLE_ID, "APPWRITE_BANK_TABLE_ID"),
+      rowId: ID.unique(),
+      data: {
         userId,
         bankId,
         accountId,
@@ -180,11 +199,12 @@ export const createBankAccount = async ({
         fundingSourceUrl,
         shareableId,
       },
-    );
+    });
 
     return parseStringify(bankAccount);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to create bank row in Appwrite:", error);
+    throw error;
   }
 };
 
@@ -227,10 +247,12 @@ export const exchangePublicToken = async ({
     });
 
     // If the funding source URL is not created, throw an error
-    if (!fundingSourceUrl) throw Error;
+    if (!fundingSourceUrl) {
+      throw new Error("Dwolla did not return a funding source URL.");
+    }
 
     // Create a bank account using the user ID, item ID, account ID, access token, funding source URL, and shareableId ID
-    await createBankAccount({
+    const bankAccount = await createBankAccount({
       userId: user.$id,
       bankId: itemId,
       accountId: accountData.account_id,
@@ -238,6 +260,10 @@ export const exchangePublicToken = async ({
       fundingSourceUrl,
       shareableId: encryptId(accountData.account_id),
     });
+
+    if (!bankAccount) {
+      throw new Error("Appwrite did not return the saved bank account.");
+    }
 
     // Revalidate the path to reflect the changes
     revalidatePath("/");
@@ -248,56 +274,56 @@ export const exchangePublicToken = async ({
     });
   } catch (error) {
     console.error("An error occurred while creating exchanging token:", error);
+    throw error;
   }
 };
 
-// export const getBanks = async ({ userId }: getBanksProps) => {
-//   try {
+export const getBanks = async ({ userId }: getBanksProps) => {
+  try {
+    const { tables } = await createAdminClient();
 
-//     const { database } = await createAdminClient();
+    const banks = await tables.listRows({
+      ...getTableConfig(BANK_TABLE_ID, "APPWRITE_BANK_TABLE_ID"),
+      queries: [Query.equal("userId", [userId])],
+    });
 
-//     const banks = await database.listDocuments(
-//       DATABASE_ID!,
-//       BANK_COLLECTION_ID!,
-//       [Query.equal('userId', [userId])]
-//     )
+    return parseStringify(banks.rows);
+  } catch (error) {
+    console.error("Failed to fetch bank rows from Appwrite:", error);
+    throw error;
+  }
+};
 
-//     return parseStringify(banks.documents);
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
+export const getBank = async ({ documentId }: getBankProps) => {
+  try {
+    const { tables } = await createAdminClient();
 
-// export const getBank = async ({ documentId }: getBankProps) => {
-//   try {
-//     const { database } = await createAdminClient();
+    const bank = await tables.getRow({
+      ...getTableConfig(BANK_TABLE_ID, "APPWRITE_BANK_TABLE_ID"),
+      rowId: documentId,
+    });
 
-//     const bank = await database.listDocuments(
-//       DATABASE_ID!,
-//       BANK_COLLECTION_ID!,
-//       [Query.equal('$id', [documentId])]
-//     )
+    return parseStringify(bank.rows[0]);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-//     return parseStringify(bank.documents[0]);
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
+export const getBankByAccountId = async ({
+  accountId,
+}: getBankByAccountIdProps) => {
+  try {
+    const { tables } = await createAdminClient();
 
-// export const getBankByAccountId = async ({ accountId }: getBankByAccountIdProps) => {
-//   try {
-//     const { database } = await createAdminClient();
+    const bank = await tables.listRows({
+      ...getTableConfig(BANK_TABLE_ID, "APPWRITE_BANK_TABLE_ID"),
+      queries: [Query.equal("accountId", [accountId])],
+    });
 
-//     const bank = await database.listDocuments(
-//       DATABASE_ID!,
-//       BANK_COLLECTION_ID!,
-//       [Query.equal('accountId', [accountId])]
-//     )
+    if (bank.total !== 1) return null;
 
-//     if(bank.total !== 1) return null;
-
-//     return parseStringify(bank.documents[0]);
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
+    return parseStringify(bank.rows[0]);
+  } catch (error) {
+    console.log(error);
+  }
+};

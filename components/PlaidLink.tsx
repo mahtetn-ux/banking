@@ -1,41 +1,65 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { Button } from './ui/button'
-import { PlaidLinkOnSuccess, PlaidLinkOptions, usePlaidLink } from 'react-plaid-link'
-import { useRouter } from 'next/navigation';
-import { createLinkToken, exchangePublicToken } from '@/lib/actions/user.actions';
-import Image from 'next/image';
+import React, { useCallback, useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import {
+  PlaidLinkOnSuccess,
+  PlaidLinkOptions,
+  usePlaidLink,
+} from "react-plaid-link";
+import { useRouter } from "next/navigation";
+import {
+  createLinkToken,
+  exchangePublicToken,
+} from "@/lib/actions/user.actions";
+import Image from "next/image";
 
 const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
   const router = useRouter();
 
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
+  const [connectionError, setConnectionError] = useState("");
 
   useEffect(() => {
     const getLinkToken = async () => {
       const data = await createLinkToken(user);
 
-      setToken(data?.linkToken);
-    }
+      setToken(data?.linkToken ?? "");
+    };
 
     getLinkToken();
   }, [user]);
 
-  const onSuccess = useCallback<PlaidLinkOnSuccess>(async (public_token: string) => {
-    await exchangePublicToken({
-      publicToken: public_token,
-      user,
-    })
+  const onSuccess = useCallback<PlaidLinkOnSuccess>(
+    async (public_token: string) => {
+      setConnectionError("");
 
-    router.push('/');
-  }, [user])
-  
+      try {
+        const result = await exchangePublicToken({
+          publicToken: public_token,
+          user,
+        });
+
+        if (!result?.publicTokenExchange) {
+          throw new Error("The bank connection was not saved.");
+        }
+
+        router.push("/");
+      } catch (error) {
+        console.error("Failed to finish connecting the bank:", error);
+        setConnectionError(
+          "We couldn't save your bank connection. Please try again.",
+        );
+      }
+    },
+    [router, user],
+  );
+
   const config: PlaidLinkOptions = {
     token,
-    onSuccess
-  }
+    onSuccess,
+  };
 
   const { open, ready } = usePlaidLink(config);
-  
+
   return (
     <>
       {variant === 'primary' ? (
@@ -67,8 +91,13 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
           <p className='text-[16px] font-semibold text-black-2'>Connect bank</p>
         </Button>
       )}
+      {connectionError && (
+        <p role="alert" className="text-sm text-red-600">
+          {connectionError}
+        </p>
+      )}
     </>
-  )
-}
+  );
+};
 
-export default PlaidLink
+export default PlaidLink;
