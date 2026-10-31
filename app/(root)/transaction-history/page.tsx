@@ -57,7 +57,7 @@ const TransactionHistoryContent = async ({
 
   const account = await getAccount({ appwriteItemId });
 
-  const rowsPerPage = 2;
+  const rowsPerPage = 10;
   const totalPages = Math.ceil(account?.transactions.length / rowsPerPage);
 
   const indexOfLastTransaction = currentPage * rowsPerPage;
