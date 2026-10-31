@@ -3,12 +3,27 @@ import Sidebar from "@/components/Sidebar";
 import { getLoggedInUser } from "@/lib/actions/user.actions";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { connection } from "next/server";
+import { Suspense } from "react";
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  // Ensure authentication runs at request time
-  await connection();
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex h-screen w-full items-center justify-center font-inter">
+          <p>Loading...</p>
+        </main>
+      }
+    >
+      <AuthenticatedLayout>{children}</AuthenticatedLayout>
+    </Suspense>
+  );
+}
 
+async function AuthenticatedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const loggedIn = await getLoggedInUser();
 
   if (!loggedIn) {

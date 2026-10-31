@@ -23,6 +23,32 @@ const dwollaClient = new Client({
   secret: process.env.DWOLLA_SECRET as string,
 });
 
+const getExistingFundingSourceUrl = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null || !("body" in error)) {
+    return;
+  }
+
+  const body = error.body;
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("code" in body) ||
+    body.code !== "DuplicateResource" ||
+    !("_links" in body) ||
+    typeof body._links !== "object" ||
+    body._links === null ||
+    !("about" in body._links) ||
+    typeof body._links.about !== "object" ||
+    body._links.about === null ||
+    !("href" in body._links.about) ||
+    typeof body._links.about.href !== "string"
+  ) {
+    return;
+  }
+
+  return body._links.about.href;
+};
+
 // Create a Dwolla Funding Source using a Plaid Processor Token
 export const createFundingSource = async (
   options: CreateFundingSourceOptions
@@ -32,10 +58,17 @@ export const createFundingSource = async (
       .post(`customers/${options.customerId}/funding-sources`, {
         name: options.fundingSourceName,
         plaidToken: options.plaidToken,
+        _links: options._links,
       })
       .then((res) => res.headers.get("location"));
   } catch (err) {
+    const existingFundingSourceUrl = getExistingFundingSourceUrl(err);
+    if (existingFundingSourceUrl) {
+      return existingFundingSourceUrl;
+    }
+
     console.error("Creating a Funding Source Failed: ", err);
+    throw err;
   }
 };
 
@@ -48,6 +81,7 @@ export const createOnDemandAuthorization = async () => {
     return authLink;
   } catch (err) {
     console.error("Creating an On Demand Authorization Failed: ", err);
+    throw err;
   }
 };
 
@@ -109,6 +143,7 @@ export const addFundingSource = async ({
     };
     return await createFundingSource(fundingSourceOptions);
   } catch (err) {
-    console.error("Transfer fund failed: ", err);
+    console.error("Adding the funding source failed: ", err);
+    throw err;
   }
 };

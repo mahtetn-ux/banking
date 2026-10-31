@@ -88,7 +88,7 @@ declare type Bank = {
   bankId: string;
   accessToken: string;
   fundingSourceUrl: string;
-  userId: string;
+  userId: string | { $id: string };
   shareableId: string;
 };
 

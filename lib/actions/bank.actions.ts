@@ -54,7 +54,7 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
           type: accountData.type as string,
           subtype: accountData.subtype! as string,
           appwriteItemId: bank.$id,
-          sharaebleId: bank.shareableId,
+          shareableId: bank.shareableId,
         };
 
         return account;
@@ -91,7 +91,7 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
     });
 
     const transferTransactions = transferTransactionsData.rows.map(
-      (transferData) => ({
+      (transferData: Transaction) => ({
         id: transferData.$id,
         name: transferData.name!,
         amount: transferData.amount!,
@@ -135,6 +135,7 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
     });
   } catch (error) {
     console.error("An error occurred while getting the account:", error);
+    throw error;
   }
 };
 
@@ -161,35 +162,85 @@ export const getTransactions = async ({
   accessToken,
 }: getTransactionsProps) => {
   let hasMore = true;
-  let transactions: any = [];
+  let cursor: string | undefined;
+  const addedTransactions: Awaited<
+    ReturnType<typeof plaidClient.transactionsSync>
+  >["data"]["added"] = [];
 
   try {
-    // Iterate through each page of new transaction updates for item
     while (hasMore) {
       const response = await plaidClient.transactionsSync({
         access_token: accessToken,
+        ...(cursor ? { cursor } : {}),
       });
 
-      const data = response.data;
-
-      transactions = response.data.added.map((transaction) => ({
-        id: transaction.transaction_id,
-        name: transaction.name,
-        paymentChannel: transaction.payment_channel,
-        type: transaction.payment_channel,
-        accountId: transaction.account_id,
-        amount: transaction.amount,
-        pending: transaction.pending,
-        category: transaction.category ? transaction.category[0] : "",
-        date: transaction.date,
-        image: transaction.logo_url,
-      }));
-
-      hasMore = data.has_more;
+      addedTransactions.push(...response.data.added);
+      cursor = response.data.next_cursor ?? undefined;
+      hasMore = response.data.has_more;
     }
+
+    const transactions = addedTransactions.map((transaction) => ({
+      id: transaction.transaction_id,
+      name: transaction.name,
+      paymentChannel: transaction.payment_channel,
+      type: transaction.payment_channel,
+      accountId: transaction.account_id,
+      amount: transaction.amount,
+      pending: transaction.pending,
+      category: transaction.category?.[0] ?? "",
+      date: transaction.date,
+      image: transaction.logo_url,
+    }));
 
     return parseStringify(transactions);
   } catch (error) {
-    console.error("An error occurred while getting the accounts:", error);
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof error.response === "object" &&
+      error.response !== null &&
+      "data" in error.response &&
+      typeof error.response.data === "object" &&
+      error.response.data !== null
+    ) {
+      const responseData = error.response.data;
+      const errorCode =
+        "error_code" in responseData &&
+        typeof responseData.error_code === "string"
+          ? responseData.error_code
+          : undefined;
+      const errorMessage =
+        "error_message" in responseData &&
+        typeof responseData.error_message === "string"
+          ? responseData.error_message
+          : undefined;
+      const requestId =
+        "request_id" in responseData &&
+        typeof responseData.request_id === "string"
+          ? responseData.request_id
+          : undefined;
+
+      console.error("Plaid transaction sync failed:", {
+        error_code: errorCode,
+        error_message: errorMessage,
+        request_id: requestId,
+      });
+
+      if (errorCode === "ADDITIONAL_CONSENT_REQUIRED") {
+        console.warn(
+          "Transactions are unavailable until the user grants consent through Plaid Link.",
+        );
+        return [];
+      }
+
+      throw new Error(
+        [errorCode, errorMessage].filter(Boolean).join(": ") ||
+          "Plaid rejected the transaction sync request.",
+      );
+    } else {
+      console.error("Plaid transaction sync failed with an unexpected error.");
+      throw new Error("Plaid transaction sync failed.");
+    }
   }
 };

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import {
   PlaidLinkOnSuccess,
@@ -17,22 +17,58 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
 
   const [token, setToken] = useState("");
   const [connectionError, setConnectionError] = useState("");
+  const [hasExistingBank, setHasExistingBank] = useState(false);
+  const [isLoadingUpdate, setIsLoadingUpdate] = useState(false);
+  const tokenRequestedFor = useRef<string | null>(null);
+  const updateModeRef = useRef(false);
+  const openAfterLoad = useRef(false);
+  const openRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    const getLinkToken = async () => {
-      const data = await createLinkToken(user);
+    if (tokenRequestedFor.current === user.$id) return;
+    tokenRequestedFor.current = user.$id;
 
-      setToken(data?.linkToken ?? "");
-    };
-
-    getLinkToken();
+    createLinkToken(user)
+      .then((data) => {
+        setHasExistingBank(Boolean(data?.hasExistingBank));
+        setToken(data?.linkToken ?? "");
+      })
+      .catch((error) => {
+        console.error("Failed to initialize Plaid Link:", error);
+        setConnectionError("We couldn't load the bank connection flow.");
+      });
   }, [user]);
+
+  const updateTransactionConsent = async () => {
+    setConnectionError("");
+    setIsLoadingUpdate(true);
+
+    try {
+      const data = await createLinkToken(user, "update");
+      updateModeRef.current = true;
+      openAfterLoad.current = true;
+      setToken(data?.linkToken ?? "");
+    } catch (error) {
+      console.error("Failed to create Plaid update Link token:", error);
+      setConnectionError(
+        "We couldn't load the transaction-consent flow. Please try again.",
+      );
+    } finally {
+      setIsLoadingUpdate(false);
+    }
+  };
 
   const onSuccess = useCallback<PlaidLinkOnSuccess>(
     async (public_token: string) => {
       setConnectionError("");
 
       try {
+        if (updateModeRef.current) {
+          updateModeRef.current = false;
+          router.refresh();
+          return;
+        }
+
         const result = await exchangePublicToken({
           publicToken: public_token,
           user,
@@ -56,9 +92,18 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
   const config: PlaidLinkOptions = {
     token,
     onSuccess,
+    onLoad: () => {
+      if (openAfterLoad.current) {
+        openAfterLoad.current = false;
+        openRef.current();
+      }
+    },
   };
 
   const { open, ready } = usePlaidLink(config);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   return (
     <>
@@ -81,15 +126,35 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
           <p className='hiddenl text-[16px] font-semibold text-black-2 xl:block'>Connect bank</p>
         </Button>
       ): (
-        <Button onClick={() => open()} className="plaidlink-default">
-          <Image 
-            src="/icons/connect-bank.svg"
-            alt="connect bank"
-            width={24}
-            height={24}
-          />
-          <p className='text-[16px] font-semibold text-black-2'>Connect bank</p>
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={() => open()}
+            disabled={!ready || isLoadingUpdate}
+            className="plaidlink-default"
+          >
+            <Image
+              src="/icons/connect-bank.svg"
+              alt="connect bank"
+              width={24}
+              height={24}
+            />
+            <p className="text-[16px] font-semibold text-black-2">
+              Connect bank
+            </p>
+          </Button>
+          {hasExistingBank && (
+            <Button
+              onClick={updateTransactionConsent}
+              disabled={!ready || isLoadingUpdate}
+              variant="ghost"
+              className="plaidlink-ghost"
+            >
+              {isLoadingUpdate
+                ? "Loading..."
+                : "Grant transaction access"}
+            </Button>
+          )}
+        </div>
       )}
       {connectionError && (
         <p role="alert" className="text-sm text-red-600">

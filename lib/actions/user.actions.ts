@@ -16,12 +16,8 @@ import { revalidatePath } from "next/cache";
 import { addFundingSource, createDwollaCustomer } from "./dwolla.actions";
 
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
-const USER_TABLE_ID =
-  process.env.APPWRITE_USER_TABLE_ID ??
-  process.env.APPWRITE_USER_COLLECTION_ID;
-const BANK_TABLE_ID =
-  process.env.APPWRITE_BANK_TABLE_ID ??
-  process.env.APPWRITE_BANK_COLLECTION_ID;
+const USER_TABLE_ID = process.env.APPWRITE_USER_TABLE_ID;
+const BANK_TABLE_ID = process.env.APPWRITE_BANK_TABLE_ID;
 
 const getTableConfig = (tableId: string | undefined, tableName: string) => {
   if (!DATABASE_ID) {
@@ -156,23 +152,47 @@ export const logoutAccount = async () => {
   }
 };
 
-export const createLinkToken = async (user: User) => {
+export const createLinkToken = async (
+  user: User,
+  mode: "connect" | "update" = "connect",
+) => {
   try {
-    const tokenParams = {
+    const userParams = {
       user: {
         client_user_id: user.$id,
       },
       client_name: `${user.firstName} ${user.lastName}`,
-      products: ["auth"] as Products[],
       language: "en",
       country_codes: ["US"] as CountryCode[],
     };
 
+    const existingBanks = await getBanks({ userId: user.$id });
+    const existingBank = existingBanks?.[0] as Bank | undefined;
+    if (mode === "update" && !existingBank) {
+      throw new Error("No connected bank is available to update.");
+    }
+
+    const tokenParams =
+      mode === "update" && existingBank
+        ? {
+            ...userParams,
+            access_token: existingBank.accessToken,
+            additional_consented_products: ["transactions"] as Products[],
+          }
+        : {
+            ...userParams,
+            products: ["auth"] as Products[],
+            required_if_supported_products: ["transactions"] as Products[],
+          };
+
     const response = await plaidClient.linkTokenCreate(tokenParams);
 
-    return parseStringify({ linkToken: response.data.link_token });
+    return parseStringify({
+      linkToken: response.data.link_token,
+      hasExistingBank: Boolean(existingBank),
+    });
   } catch (error) {
-    console.error("Failed to fetch user row from Appwrite:", error);
+    console.error("Failed to create Plaid Link token:", error);
     throw error;
   }
 };
@@ -303,9 +323,10 @@ export const getBank = async ({ documentId }: getBankProps) => {
       rowId: documentId,
     });
 
-    return parseStringify(bank.rows[0]);
+    return parseStringify(bank);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch bank row from Appwrite:", error);
+    throw error;
   }
 };
 

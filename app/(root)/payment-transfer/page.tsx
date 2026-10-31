@@ -1,9 +1,51 @@
-import React from 'react'
+import HeaderBox from "@/components/HeaderBox";
+import PaymentTransferForm from "@/components/PaymentTransferForm";
+import { getAccounts } from "@/lib/actions/bank.actions";
+import { getLoggedInUser } from "@/lib/actions/user.actions";
+import { Suspense } from "react";
 
-const Transfer = () => {
+const Transfer = () => (
+  <Suspense
+    fallback={
+      <section className="payment-transfer">
+        <p>Loading your accounts...</p>
+      </section>
+    }
+  >
+    <TransferContent />
+  </Suspense>
+);
+
+const TransferContent = async () => {
+  const loggedIn = await getLoggedInUser();
+  const accounts = await getAccounts({
+    userId: loggedIn.$id,
+  });
+
+  if (!accounts?.data?.length) {
+    return (
+      <section className="payment-transfer">
+        <HeaderBox
+          title="Payment Transfer"
+          subtext="Please provide any specific details or notes related to the payment transfer"
+        />
+        <p>No bank accounts connected yet.</p>
+      </section>
+    );
+  }
+
   return (
-    <div>Transfer</div>
-  )
-}
+    <section className="payment-transfer">
+      <HeaderBox
+        title="Payment Transfer"
+        subtext="Please provide any specific details or notes related to the payment transfer"
+      />
 
-export default Transfer
+      <section className="size-full pt-5">
+        <PaymentTransferForm accounts={accounts.data} />
+      </section>
+    </section>
+  );
+};
+
+export default Transfer;
