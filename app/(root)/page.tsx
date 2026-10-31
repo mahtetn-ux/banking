@@ -60,6 +60,7 @@ const HomeContent = async ({
 
           <p>No bank accounts connected yet.</p>
         </div>
+        <RightSideBar user={loggedIn} transactions={[]} banks={[]} />
       </section>
     );
   }

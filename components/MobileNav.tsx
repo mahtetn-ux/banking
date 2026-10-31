@@ -4,9 +4,6 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { sidebarLinks } from "@/constants";
@@ -15,15 +12,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Footer from "./Footer";
-// import Footer from "./Footer"
+import PlaidLink from "./PlaidLink";
 
 const MobileNav = ({ user }: MobileNavProps) => {
   const pathname = usePathname();
 
   return (
-    <section className="w-full max-w-[264px]">
+    <section>
       <Sheet>
-        <SheetTrigger>
+        <SheetTrigger className="flex size-10 items-center justify-center rounded-lg hover:bg-gray-25">
           <Image
             src="/icons/hamburger.svg"
             width={30}
@@ -32,63 +29,68 @@ const MobileNav = ({ user }: MobileNavProps) => {
             className="cursor-pointer"
           />
         </SheetTrigger>
-        <SheetContent side="left" className="border-none bg-white">
+        <SheetContent
+          side="left"
+          className="w-[min(84vw,320px)] border-r border-gray-200 bg-white p-0 sm:w-80"
+        >
           <Link
             href="/"
-            className="cursor-pointer flex items-center gap-1 px-4"
+            className="flex min-h-16 items-center gap-2 border-b border-gray-200 px-5"
           >
             <Image
               src="/icons/logo.svg"
-              width={34}
-              height={34}
+              width={30}
+              height={30}
               alt="Horizon logo"
             />
-            <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">
+            <h1 className="font-ibm-plex-serif text-2xl font-bold text-black-1">
               Horizon
             </h1>
           </Link>
-          <div className="mobilenav-sheet">
-            <SheetClose asChild>
-              <nav className="flex h-full flex-col gap-6 pt-16 text-white">
-                {sidebarLinks.map((item) => {
-                  const isActive =
-                    pathname === item.route ||
-                    pathname.startsWith(`${item.route}/`);
+          <div className="mobilenav-sheet px-4 py-5">
+            <nav className="flex flex-col gap-2">
+              {sidebarLinks.map((item) => {
+                const isActive =
+                  pathname === item.route ||
+                  pathname.startsWith(`${item.route}/`);
 
-                  return (
-                    <SheetClose asChild key={item.route}>
+                return (
+                  <SheetClose
+                    key={item.route}
+                    render={
                       <Link
                         href={item.route}
-                        key={item.label}
-                        className={cn("mobilenav-sheet_close w-full", {
-                          "bg-bank-gradient": isActive,
+                        className={cn("mobilenav-sheet_close", {
+                          "bg-bank-gradient text-white hover:bg-bank-gradient":
+                            isActive,
                         })}
                       >
                         <Image
                           src={item.imgURL}
-                          alt={item.label}
+                          alt=""
                           width={20}
                           height={20}
-                          className={cn({
+                          className={cn("shrink-0", {
                             "brightness-[3] invert-0": isActive,
                           })}
                         />
-                        <p
-                          className={cn("text-16 font-semibold text-black-2", {
+                        <span
+                          className={cn("text-sm font-semibold text-black-2", {
                             "text-white": isActive,
                           })}
                         >
                           {item.label}
-                        </p>
+                        </span>
                       </Link>
-                    </SheetClose>
-                  );
-                })}
-                USER
-              </nav>
-            </SheetClose>
+                    }
+                  />
+                );
+              })}
+            </nav>
+            <div className="mt-5 border-t border-gray-200 pt-4">
+              <PlaidLink user={user} />
+            </div>
             <Footer user={user} type="mobile" />
-            {/* <Footer user={user} type="mobile" /> */}
           </div>
         </SheetContent>
       </Sheet>

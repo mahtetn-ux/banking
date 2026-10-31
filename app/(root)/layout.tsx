@@ -2,6 +2,7 @@ import MobileNav from "@/components/MobileNav";
 import Sidebar from "@/components/Sidebar";
 import { getLoggedInUser } from "@/lib/actions/user.actions";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -31,16 +32,19 @@ async function AuthenticatedLayout({
   }
 
   return (
-    <main className="flex h-screen w-full font-inter">
+    <main className="flex min-h-screen w-full min-w-0 font-inter">
       <Sidebar user={loggedIn} />
 
-      <div className="flex size-full flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <div className="root-layout">
-          <Image src="/icons/logo.svg" width={30} height={30} alt="logo" />
+          <Link href="/" className="flex items-center gap-2" aria-label="Horizon home">
+            <Image src="/icons/logo.svg" width={30} height={30} alt="" />
+            <span className="font-ibm-plex-serif text-xl font-bold text-black-1">
+              Horizon
+            </span>
+          </Link>
 
-          <div>
-            <MobileNav user={loggedIn} />
-          </div>
+          <MobileNav user={loggedIn} />
         </div>
 
         {children}

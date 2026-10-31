@@ -11,6 +11,7 @@ import {
   exchangePublicToken,
 } from "@/lib/actions/user.actions";
 import Image from "next/image";
+import { ShieldCheck } from "lucide-react";
 
 const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
   const router = useRouter();
@@ -107,7 +108,7 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
 
   return (
     <>
-      {variant === 'primary' ? (
+      {variant === "primary" ? (
         <Button
           onClick={() => open()}
           disabled={!ready}
@@ -115,45 +116,59 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
         >
           Connect bank
         </Button>
-      ): variant === 'ghost' ? (
-        <Button onClick={() => open()} variant="ghost" className="plaidlink-ghost">
-          <Image 
+      ) : variant === "ghost" ? (
+        <Button
+          onClick={() => open()}
+          variant="ghost"
+          className="plaidlink-ghost"
+        >
+          <Image
             src="/icons/connect-bank.svg"
             alt="connect bank"
             width={24}
             height={24}
           />
-          <p className='hiddenl text-[16px] font-semibold text-black-2 xl:block'>Connect bank</p>
+          <p className="hiddenl text-[16px] font-semibold text-black-2 xl:block">
+            Connect bank
+          </p>
         </Button>
-      ): (
-        <div className="flex flex-col gap-2">
+      ) : (
+        <div className="sidebar-actions">
           <Button
             onClick={() => open()}
             disabled={!ready || isLoadingUpdate}
-            className="plaidlink-default"
+            variant="ghost"
+            className="sidebar-link"
           >
             <Image
               src="/icons/connect-bank.svg"
               alt="connect bank"
-              width={24}
-              height={24}
+              width={20}
+              height={20}
             />
-            <p className="text-[16px] font-semibold text-black-2">
-              Connect bank
-            </p>
+            <span className="sidebar-label">Connect bank</span>
           </Button>
-          {hasExistingBank && (
-            <Button
-              onClick={updateTransactionConsent}
-              disabled={!ready || isLoadingUpdate}
-              variant="ghost"
-              className="plaidlink-ghost"
-            >
-              {isLoadingUpdate
-                ? "Loading..."
-                : "Grant transaction access"}
-            </Button>
-          )}
+          {/* {hasExistingBank && (
+            <section className="transaction-access">
+              <div>
+                <h2 className="text-xs font-semibold text-gray-700">
+                  Transaction sync
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  Allow access to your bank transactions.
+                </p>
+              </div>
+              <Button
+                onClick={updateTransactionConsent}
+                disabled={!ready || isLoadingUpdate}
+                variant="outline"
+                className="transaction-access-button"
+              >
+                <ShieldCheck aria-hidden="true" />
+                {isLoadingUpdate ? "Loading..." : "Grant access"}
+              </Button>
+            </section>
+          )} */}
         </div>
       )}
       {connectionError && (

@@ -29,9 +29,14 @@ const Footer = ({ user, type = "desktop" }: FooterProps) => {
           {user?.email}
         </p>
 
-        <div className="footer_image" onClick={handleLogOut}>
-          <Image src="icons/logout.svg" fill alt="jsm" />
-        </div>
+        <button
+          type="button"
+          className="footer_image rounded-md p-1 hover:bg-gray-100"
+          onClick={handleLogOut}
+          aria-label="Log out"
+        >
+          <Image src="/icons/logout.svg" fill alt="" />
+        </button>
       </div>
     </footer>
   );

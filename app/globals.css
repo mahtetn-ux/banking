@@ -1,7 +1,40 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+@layer base {
+  :root {
+    color-scheme: light;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    background: #f8fafc;
+    color: #101828;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 3px solid rgb(46 144 250 / 45%);
+    outline-offset: 2px;
+  }
+}
+
 .glassmorphism {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(4px);
@@ -84,7 +117,7 @@
 
 @layer utilities {
   .input-class {
-    @apply text-16 placeholder:text-16 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-500;
+    @apply min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-500 focus-visible:border-blue-500;
   }
 
   .sheet-content button {
@@ -99,25 +132,29 @@
     @apply text-18 font-semibold text-gray-900;
   }
 
-  /* Home */
+  /* Shared application layout */
   .home {
-    @apply no-scrollbar flex w-full flex-row max-xl:max-h-screen max-xl:overflow-y-scroll;
+    @apply grid min-h-[calc(100vh-4rem)] w-full min-w-0 grid-cols-1 bg-gray-25 xl:min-h-screen xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px];
   }
 
   .home-content {
-    @apply no-scrollbar flex w-full flex-1 flex-col gap-8 px-5 sm:px-8 py-7 lg:py-12 xl:max-h-screen xl:overflow-y-scroll;
+    @apply flex min-w-0 w-full flex-col gap-7 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8 lg:px-8 lg:py-10;
   }
 
   .home-header {
-    @apply flex flex-col justify-between gap-8;
+    @apply flex flex-col justify-between gap-6;
   }
 
   .total-balance {
-    @apply flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 shadow-chart sm:gap-6 sm:p-6;
+    @apply flex w-full items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-chart sm:gap-6 sm:p-6;
   }
 
   .total-balance-chart {
-    @apply flex size-full max-w-[100px] items-center sm:max-w-[120px];
+    @apply flex size-20 shrink-0 items-center sm:size-28;
+  }
+
+  .total-balance > div:last-child {
+    @apply min-w-0 flex-1;
   }
 
   .total-balance-label {
@@ -125,48 +162,44 @@
   }
 
   .total-balance-amount {
-    @apply text-24 lg:text-30 flex-1 font-semibold text-gray-900;
+    @apply flex-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl;
   }
 
   .recent-transactions {
-    @apply flex w-full flex-col gap-6;
+    @apply flex min-w-0 w-full flex-col gap-4 sm:gap-6;
   }
 
   .view-all-btn {
-    @apply text-14 rounded-lg border border-gray-300 px-4 py-2.5 font-semibold text-gray-700;
-  }
-
-  .recent-transactions {
-    @apply flex w-full flex-col gap-6;
+    @apply inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-25;
   }
 
   .recent-transactions-label {
-    @apply text-20 md:text-24 font-semibold text-gray-900;
+    @apply text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl;
   }
 
   .recent-transactions-tablist {
-    @apply custom-scrollbar mb-8 flex w-full flex-nowrap;
+    @apply custom-scrollbar mb-0 flex w-full flex-nowrap gap-2 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1.5 shadow-sm;
   }
 
   /* Right sidebar */
   .right-sidebar {
-    @apply no-scrollbar! hidden! h-screen! max-h-screen! flex-col! border-l! border-gray-200! xl:flex! w-[355px]! xl:overflow-y-scroll!;
+    @apply flex min-w-0 flex-col border-t border-gray-200 bg-white xl:border-l xl:border-t-0;
   }
 
   .profile-banner {
-    @apply h-[120px] w-full bg-gradient-mesh bg-cover bg-no-repeat;
+    @apply h-32 w-full bg-gradient-mesh bg-cover bg-center bg-no-repeat;
   }
 
   .profile {
-    @apply relative flex px-6 max-xl:justify-center;
+    @apply relative flex px-6;
   }
 
   .profile-img {
-    @apply flex-center absolute -top-8 size-24 rounded-full bg-gray-100 border-8 border-white p-2 shadow-profile;
+    @apply absolute -top-10 flex size-20 items-center justify-center rounded-full border-4 border-white bg-gray-100 p-2 shadow-profile;
   }
 
   .profile-details {
-    @apply flex flex-col pt-24;
+    @apply flex flex-col pt-14;
   }
 
   .profile-name {
@@ -178,25 +211,25 @@
   }
 
   .banks {
-    @apply flex flex-col justify-between gap-8 px-6 py-8;
+    @apply flex flex-col gap-8 px-6 py-8;
   }
 
   /* My Banks */
   .my-banks {
-    @apply flex h-screen max-h-screen w-full flex-col gap-8 bg-gray-25 p-8 xl:py-12;
+    @apply flex min-h-[calc(100vh-4rem)] w-full min-w-0 flex-col gap-8 bg-gray-25 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:min-h-screen;
   }
 
-  /* My Banks */
+  /* Transaction history */
   .transactions {
-    @apply flex max-h-screen w-full flex-col gap-8 overflow-y-scroll bg-gray-25 p-8 xl:py-12;
+    @apply flex min-h-[calc(100vh-4rem)] w-full min-w-0 flex-col gap-8 bg-gray-25 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:min-h-screen;
   }
 
   .transactions-header {
-    @apply flex w-full flex-col items-start justify-between gap-8 md:flex-row;
+    @apply flex w-full flex-col items-start justify-between gap-5 sm:flex-row sm:items-center;
   }
 
   .transactions-account {
-    @apply flex flex-col justify-between gap-4 rounded-lg border-y bg-blue-600 px-4 py-5 md:flex-row;
+    @apply flex flex-col justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-600 px-4 py-5 shadow-sm sm:flex-row sm:items-center;
   }
 
   .transactions-account-balance {
@@ -204,20 +237,20 @@
   }
 
   .header-box {
-    @apply flex flex-col gap-1;
+    @apply flex min-w-0 flex-col gap-1.5;
   }
 
   .header-box-title {
-    @apply text-24 lg:text-30 font-semibold text-gray-900;
+    @apply text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl;
   }
 
   .header-box-subtext {
-    @apply text-14 lg:text-16 font-normal text-gray-600;
+    @apply max-w-2xl text-sm leading-6 font-normal text-gray-600 sm:text-base;
   }
 
   /* Bank Card */
   .bank-card {
-    @apply relative flex h-[190px] w-full max-w-[320px] justify-between rounded-[20px] border border-white bg-bank-gradient shadow-creditCard backdrop-blur-[6px];
+    @apply relative flex h-[190px] w-full max-w-[360px] justify-between overflow-hidden rounded-2xl border border-white bg-bank-gradient shadow-creditCard;
   }
 
   .bank-card_content {
@@ -230,48 +263,44 @@
 
   /* Bank Info */
   .bank-info {
-    @apply gap-[18px] flex p-4 transition-all border bg-blue-25 border-transparent;
+    @apply flex min-w-0 items-center gap-4 rounded-xl border border-transparent bg-blue-25 p-4 transition-shadow;
   }
 
   /* Category Badge */
   .category-badge {
-    @apply flex-center truncate w-fit gap-1 rounded-2xl border-[1.5px] py-[2px] pl-1.5 pr-2;
+    @apply flex w-fit max-w-full items-center gap-1 truncate rounded-full border-[1.5px] py-1 pl-2 pr-2.5;
   }
 
   .banktab-item {
-    @apply gap-[18px] border-b-2 flex px-2 sm:px-4 py-2 transition-all;
+    @apply flex shrink-0 items-center gap-3 rounded-lg border-b-2 border-transparent px-3 py-2.5 transition-colors;
   }
 
   /* Mobile nav */
   .mobilenav-sheet {
-    @apply flex h-[calc(100vh-72px)] flex-col justify-between overflow-y-auto;
+    @apply flex min-h-0 flex-1 flex-col justify-between overflow-y-auto;
   }
 
   .mobilenav-sheet_close {
-    @apply flex gap-3 items-center p-4 rounded-lg w-full max-w-60;
+    @apply flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-gray-25;
   }
 
   /* PlaidLink */
   .plaidlink-primary {
-    @apply text-16 rounded-lg border border-bankGradient bg-bank-gradient font-semibold text-white shadow-form;
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border border-bankGradient bg-bank-gradient px-4 text-sm font-semibold text-white shadow-form transition-opacity hover:opacity-90;
   }
 
   .plaidlink-ghost {
-    @apply flex cursor-pointer items-center justify-center gap-3 rounded-lg px-3 py-7 hover:bg-white lg:justify-start;
-  }
-
-  .plaidlink-default {
-    @apply flex justify-start! cursor-pointer gap-3 rounded-lg bg-transparent! flex-row;
+    @apply flex min-h-11 cursor-pointer items-center justify-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-gray-25 lg:justify-start;
   }
 
   /* Auth */
   .auth-asset {
-    @apply flex h-screen w-full sticky top-0 items-center justify-end bg-sky-1 max-lg:hidden;
+    @apply sticky top-0 hidden h-screen w-full items-center justify-center bg-sky-1 p-8 lg:flex;
   }
 
   /* Auth Form */
   .auth-form {
-    @apply flex min-h-screen w-full max-w-[420px] flex-col justify-center gap-5 py-10 md:gap-8;
+    @apply flex min-h-screen w-full max-w-[480px] flex-col justify-center gap-6 px-5 py-10 sm:px-8 md:gap-8;
   }
 
   .form-item {
@@ -279,7 +308,7 @@
   }
 
   .form-label {
-    @apply text-14 w-full max-w-[280px] font-medium text-gray-700;
+    @apply w-full font-medium text-gray-700;
   }
 
   .form-message {
@@ -296,54 +325,54 @@
 
   /* Payment Transfer */
   .payment-transfer {
-    @apply no-scrollbar flex flex-col overflow-y-scroll bg-gray-25 p-8 md:max-h-screen xl:py-12;
+    @apply flex min-h-[calc(100vh-4rem)] w-full min-w-0 flex-col gap-6 overflow-x-hidden bg-gray-25 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:min-h-screen;
   }
 
   .payment-transfer_form-item {
-    @apply flex w-full max-w-[850px] flex-col gap-3 md:flex-row lg:gap-8;
+    @apply grid w-full max-w-4xl grid-cols-1 items-start gap-3 py-5 sm:gap-6 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-8;
   }
 
   .payment-transfer_form-content {
-    @apply flex w-full max-w-[280px] flex-col gap-2;
+    @apply flex w-full flex-col gap-2;
   }
 
   .payment-transfer_form-details {
-    @apply flex flex-col gap-1 border-t border-gray-200 pb-5 pt-6;
+    @apply flex flex-col gap-1.5 border-t border-gray-200 pb-3 pt-6;
   }
 
   .payment-transfer_btn-box {
-    @apply mt-5 flex w-full max-w-[850px] gap-3 border-gray-200 py-5;
+    @apply mt-4 flex w-full max-w-4xl flex-col gap-3 border-gray-200 py-5 sm:flex-row;
   }
 
   .payment-transfer_btn {
-    @apply text-14! w-full! bg-bank-gradient! font-semibold! text-white! shadow-form!;
+    @apply min-h-11 w-full rounded-xl bg-bank-gradient font-semibold text-white shadow-form transition-opacity hover:opacity-90;
   }
 
   /* Root Layout */
   .root-layout {
-    @apply flex h-16 items-center justify-between p-5 shadow-creditCard sm:p-8 md:hidden;
+    @apply sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 px-4 shadow-sm backdrop-blur sm:px-6 xl:hidden;
   }
 
   /* Bank Info */
   .bank-info_content {
-    @apply flex flex-1 items-center justify-between gap-2 overflow-hidden;
+    @apply flex min-w-0 flex-1 items-center justify-between gap-2 overflow-hidden;
   }
 
   /* Footer */
   .footer {
-    @apply flex cursor-pointer items-center justify-between gap-2 py-6;
+    @apply flex items-center justify-between gap-3 border-t border-gray-200 py-5;
   }
 
   .footer_name {
-    @apply flex size-10 items-center justify-center rounded-full bg-gray-200 max-xl:hidden;
+    @apply flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-200;
   }
 
   .footer_email {
-    @apply flex flex-1 flex-col justify-center max-xl:hidden;
+    @apply flex min-w-0 flex-1 flex-col justify-center;
   }
 
   .footer_name-mobile {
-    @apply flex size-10 items-center justify-center rounded-full bg-gray-200;
+    @apply flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-200;
   }
 
   .footer_email-mobile {
@@ -351,27 +380,49 @@
   }
 
   .footer_image {
-    @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center;
+    @apply relative flex size-5 shrink-0 cursor-pointer items-center justify-center;
   }
 
   .footer_image-mobile {
-    @apply relative size-5;
+    @apply relative flex size-5 shrink-0 cursor-pointer items-center justify-center;
   }
 
   /* Sidebar */
   .sidebar {
-    @apply sticky left-0 top-0 flex h-screen w-fit flex-col  justify-between border-r border-gray-200 bg-white pt-8 text-white max-md:hidden sm:p-4 xl:p-6 2xl:w-[355px];
+    @apply sticky left-0 top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-gray-200 bg-white px-4 py-6 text-gray-900 xl:flex 2xl:w-72 2xl:px-5;
   }
 
   .sidebar-logo {
-    @apply 2xl:text-26 font-ibm-plex-serif text-[26px] font-bold text-black-1 max-xl:hidden;
+    @apply font-ibm-plex-serif text-2xl font-bold text-black-1;
   }
 
   .sidebar-link {
-    @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg justify-center xl:justify-start;
+    @apply flex min-h-12 w-full items-center justify-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-25;
   }
 
   .sidebar-label {
-    @apply text-16 font-semibold text-black-2 max-xl:hidden;
+    @apply text-sm font-semibold text-black-2;
+  }
+
+  .sidebar-actions {
+    @apply mt-1 flex flex-col gap-3;
+  }
+
+  .transaction-access {
+    @apply ml-3 flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-25 p-3;
+  }
+
+  .transaction-access-button {
+    @apply min-h-10 w-full justify-start gap-2 rounded-lg border-gray-300 bg-white px-3 text-left text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-100;
+  }
+}
+
+@media (max-width: 639px) {
+  .transactions table {
+    min-width: 720px;
+  }
+
+  .recent-transactions [data-slot="table"] {
+    min-width: 720px;
   }
 }

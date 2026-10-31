@@ -20,6 +20,39 @@ const config = {
     },
     extend: {
       colors: {
+        background: "#FFFFFF",
+        foreground: "#101828",
+        border: "#EAECF0",
+        input: "#D0D5DD",
+        ring: "#2E90FA",
+        primary: {
+          DEFAULT: "#1570EF",
+          foreground: "#FFFFFF",
+        },
+        secondary: {
+          DEFAULT: "#F2F4F7",
+          foreground: "#344054",
+        },
+        muted: {
+          DEFAULT: "#F2F4F7",
+          foreground: "#667085",
+        },
+        accent: {
+          DEFAULT: "#F5FAFF",
+          foreground: "#194185",
+        },
+        destructive: {
+          DEFAULT: "#D92D20",
+          foreground: "#FFFFFF",
+        },
+        popover: {
+          DEFAULT: "#FFFFFF",
+          foreground: "#101828",
+        },
+        card: {
+          DEFAULT: "#FFFFFF",
+          foreground: "#101828",
+        },
         fill: {
           1: "rgba(255, 255, 255, 0.10)",
         },
@@ -84,8 +117,8 @@ const config = {
         creditCard: "8px 10px 16px 0px rgba(0, 0, 0, 0.05)",
       },
       fontFamily: {
-        inter: "var(--font-inter)",
-        "ibm-plex-serif": "var(--font-ibm-plex-serif)",
+        inter: "var(--font-geist-sans)",
+        "ibm-plex-serif": "var(--font-geist-sans)",
       },
       keyframes: {
         "accordion-down": {

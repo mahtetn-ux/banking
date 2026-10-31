@@ -34,8 +34,8 @@ const RecentTransactions = ({
         </Link>
       </header>
 
-      <Tabs defaultValue={appwriteItemId} className="w-full">
-        <TabsList className="recent-transactions-tablist">
+        <Tabs defaultValue={appwriteItemId} className="w-full min-w-0">
+          <TabsList className="recent-transactions-tablist">
           {accounts.map((account: Account) => (
             <TabsTrigger key={account.id} value={account.appwriteItemId}>
               <BankTabItem
